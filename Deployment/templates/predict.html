@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.2.1/dist/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+
+    <title>Octave ATI - Image Segmentation API</title>
+</head>
+<body>
+
+  <div class="container-fluid">
+    <div class="col">
+      <center><h1 style="padding:30px;font-weight: 600 !important;font-size: 3.2em">Image Segmentation API Results</h1></center>
+    </div>
+  </div>
+
+<div class='container-fluid'>
+    <div class="row">
+      <div class='col'>
+          <center><h3>Base image</h3>
+          <img src="{{ user_image }}" alt="User Image" class="img-thumbnail"></center>
+        </span>
+      </div>
+      <div class="col">
+        <center><h3>True Mask</h3>
+        <img src="{{ true_mask }}" alt="True Mask" class="img-thumbnail"></center>
+      </div>
+      <div class="col">
+        <center><h3>Predicted Mask</h3>
+        <img src="{{ pred_mask }}" alt="Predicted Mask" class="img-thumbnail"></center>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div class='container-fluid'>
+   <div class="row justify-content-center">
+    <div class="col">
+      <center><h2 style="padding:80px;font-weight: 400 !important;font-size: 2em">Segment another Image</h1></center>
+    </div>
+  </div>
+  <div class="row justify-content-center">
+     <div class='col-xs-12'>
+      
+      <form  class="form-inline" action = "/predict" method = "post" enctype="multipart/form-data">
+          <center>
+          <input type="file" name="file"/><br>
+          <input type = "submit" class="btn btn-success" value="Predict", style='margin: 30px'>
+          </center>
+      </form>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

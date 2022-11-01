@@ -1,4 +1,6 @@
 Data/
+Models/
+Research/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
