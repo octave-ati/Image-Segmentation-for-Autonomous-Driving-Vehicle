@@ -221,7 +221,7 @@ def predict():
     plt.imsave(true_mask_path, true_mask)
 
     return render_template('predict.html', user_image = image_path, true_mask=true_mask_path,
-        pred_mask=pred_mask_path)
+        pred_mask=pred_mask_path, list = test_image_list)
 
 @app.route('/custom',methods=['GET','POST'])
 def custom():
@@ -235,12 +235,14 @@ def custom():
 
             rgb_mask, grayscale_mask = create_mask(model.predict(img[tf.newaxis,...]), img)
 
-            mask_path = os.path.join('static/images', 'predicted_mask.png')
-            plt.imsave(mask_path, grayscale_mask.astype('uint8'))
+            pred_mask_path = os.path.join('static/images', 'predicted_mask.png')
+            plt.imsave(pred_mask_path, grayscale_mask.astype('uint8'))
+            plt.imsave(file_path, img)
             
 
-            return render_template('predict.html', fruit = 'fruit',prob=5, user_image = file_path,
-                )
+            return render_template('predict.html', user_image = file_path, 
+                pred_mask=pred_mask_path, true_mask="none", list = test_image_list)
+                
         else:
             return "Unable to read the file. Please check file extension"
 

@@ -23,10 +23,12 @@
           <img src="{{ user_image }}" alt="User Image" class="img-thumbnail"></center>
         </span>
       </div>
+      {% if true_mask!="none" %}
       <div class="col">
         <center><h3>True Mask</h3>
         <img src="{{ true_mask }}" alt="True Mask" class="img-thumbnail"></center>
       </div>
+      {% endif %}
       <div class="col">
         <center><h3>Predicted Mask</h3>
         <img src="{{ pred_mask }}" alt="Predicted Mask" class="img-thumbnail"></center>
@@ -38,21 +40,42 @@
   <div class='container-fluid'>
    <div class="row justify-content-center">
     <div class="col">
-      <center><h2 style="padding:80px;font-weight: 400 !important;font-size: 2em">Segment another Image</h1></center>
-    </div>
-  </div>
-  <div class="row justify-content-center">
-     <div class='col-xs-12'>
-      
-      <form  class="form-inline" action = "/predict" method = "post" enctype="multipart/form-data">
-          <center>
-          <input type="file" name="file"/><br>
-          <input type = "submit" class="btn btn-success" value="Predict", style='margin: 30px'>
-          </center>
-      </form>
-
+      <center><h2 style="padding:80px">Segment Another Image</h2></center>
     </div>
   </div>
 </div>
+  <div class='container-fluid'>
+      <div class='row justify-content-center' style='padding-bottom: 30px'>
+      <h3> 1. Choose image from list</h3>
+    </div>
+      <div class='row justify-content-center'>
+        <form action="/predict" method = "post">
+      <select name="file" type="file" style='margin-bottom: 20px' autocomplete="off">
+        <option value="none" selected hidden>Select an Image File</option>
+        {% for file in list %}
+          <option value= "{{file}}">{{file}}</option>"
+        {% endfor %}
+      </select>
+    </div>
+      <div class='row justify-content-center'>
+        <center>
+      <input type="submit" class="btn btn-success" value="Predict"></center></div>
+    </form>
+    </div>
+    </div>
+  </div>
+  <div class='container-fluid'>
+    <div class='row justify-content-center'>
+      <h3 style='padding-top: 30px; padding-bottom: 30px'> 2. Update your own image</h3>
+    </div>
+    <div class='row justify-content-center'>
+      <form  class="form-inline" action = "/custom" method = "post" enctype="multipart/form-data">
+        <center>
+          <input type="file" name="file"/><br>
+          <input type = "submit" class="btn btn-success" value="Predict" style='margin-top: 30px'>
+          </center>
+      </form>
+    </div>
+    </div>
 </body>
 </html>
