@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request
 #Importing packages
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 #Setting large figure size for Seaborn
@@ -19,7 +18,6 @@ from skimage.transform import resize
 import tensorflow as tf
 
 tf.get_logger().setLevel('ERROR')
-import tensorflow_hub as hub
 
 from PIL import Image
 
@@ -87,7 +85,6 @@ down_stack.trainable = False
 
 from tensorflow_examples.models.pix2pix import pix2pix
 
-from IPython.display import clear_output
 up_stack = [
     pix2pix.upsample(512, 3),  # 4x4 -> 8x8
     pix2pix.upsample(256, 3),  # 8x8 -> 16x16
@@ -133,20 +130,34 @@ OUTPUT_CLASSES = 8
 model = unet_model(output_channels=OUTPUT_CLASSES)
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[dice_coeff, 'accuracy'])
 
-model.load_weights('weights.28.ckpt')
+import boto3
+s3 = boto3.resource(service_name='s3',
+                   region_name='eu-west-3',
+                    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+                   )
+
+bucket = os.environ['S3_BUCKET']
+
+keys=[]
+for obj in s3.Bucket(bucket).objects.all():
+    keys.append(obj.key)
+
+for key in keys:
+    s3.Bucket('pro8').download_file(Key=key, Filename=key)
+
+model.load_weights('model/weights.28.ckpt')
 
 target_img = os.path.join(os.getcwd() , 'static/images')
 
-root_dir = "/home/faskill/Files/0. Files/1. WIP/2. Data Analysis/Openclassrooms/AI Engineer/Project 8/"
-img_dir = "Data/photos_raw/test/"
-mask_dir = "Data/masks/test/"
+img_dir = "photos_raw/"
+mask_dir = "masks/"
 
 
-with open('list/test_image_list.pkl', 'rb') as file:
-    test_image_list = dill.load(file)
-with open('list/test_mask_list.pkl', 'rb') as file:
-    test_mask_list = dill.load(file)
-
+test_mask_list = os.listdir(mask_dir)
+test_image_list = os.listdir(img_dir)
+test_image_list.sort()
+test_mask_list.sort()
 
 def create_mask(pred_mask,img):
         color_map = {
@@ -205,8 +216,8 @@ def read_image(filename):
 def predict():
     
     image_name = request.form.get('file')
-    file_path = root_dir + img_dir + image_name
-    mask_path = root_dir + mask_dir + image_name
+    file_path = img_dir + image_name
+    mask_path = mask_dir + image_name
 
     img = resize(io.imread(file_path), (img_height, img_width))
     true_mask = convert_categories(io.imread(mask_path))
@@ -249,6 +260,4 @@ def custom():
 
 
 
-if __name__ == '__main__':
-    app.config["TEMPLATES_AUTO_RELOAD"] = True
-    app.run(debug=True)
+

@@ -1,2 +1,0 @@
-model_checkpoint_path: "weights.28.ckpt"
-all_model_checkpoint_paths: "weights.28.ckpt"

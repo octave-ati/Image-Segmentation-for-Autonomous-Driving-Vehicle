@@ -1,0 +1,13 @@
+gunicorn
+flask
+tensorflow-cpu
+numpy
+matplotlib
+seaborn
+dill
+scikit-image
+pillow
+opencv-python-headless
+git+https://github.com/tensorflow/examples.git
+h5py
+boto3
