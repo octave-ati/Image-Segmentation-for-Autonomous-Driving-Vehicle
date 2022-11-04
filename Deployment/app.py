@@ -1,198 +1,27 @@
 from flask import Flask, render_template, request
-#Importing packages
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-#Setting large figure size for Seaborn
-sns.set(rc={'figure.figsize':(11.7,8.27),"font.size":20,"axes.titlesize":20,"axes.labelsize":18})
 
-import dill
-import os
-import shutil
 
-from skimage import io
-import cv2
+#Importing visualization functions
+from visualization import *
 
-from skimage.transform import resize
-
-import tensorflow as tf
-
-tf.get_logger().setLevel('ERROR')
-
-from PIL import Image
-
-from tensorflow.python.keras import backend as K
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Activation, BatchNormalization, Dropout, Reshape, Lambda
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import load_img
-
-from tensorflow.keras import backend as K
-
-#Importing helpers/labels.py from the cityscrapesScripts github page (https://github.com/mcordts/cityscapesScripts)
-from labels import *
+#Importing the model
+from model import *
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
+model = generate_model()
 
-cats = {'void': [0, 1, 2, 3, 4, 5, 6],
- 'flat': [7, 8, 9, 10],
- 'construction': [11, 12, 13, 14, 15, 16],
- 'object': [17, 18, 19, 20],
- 'nature': [21, 22],
- 'sky': [23],
- 'human': [24, 25],
- 'vehicle': [26, 27, 28, 29, 30, 31, 32, 33, -1]}
-
-
-
-def dice_coeff(y_true, y_pred):
-    smooth = 1.
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    score = (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-    return score
-
-def dice_loss(y_true, y_pred):
-    loss = 1 - dice_coeff(y_true, y_pred)
-    return loss
-
-def total_loss(y_true, y_pred):
-    loss = binary_crossentropy(y_true, y_pred) + (3*dice_loss(y_true, y_pred))
-    return loss
-
-img_height = 256
-img_width = 256
-batch_size = 16
-
-base_model = tf.keras.applications.MobileNetV2(input_shape=[img_height, img_width, 3], include_top=False)
-
-# Use the activations of these layers
-layer_names = [
-    'block_1_expand_relu',   # 64x64
-    'block_3_expand_relu',   # 32x32
-    'block_6_expand_relu',   # 16x16
-    'block_13_expand_relu',  # 8x8
-    'block_16_project',      # 4x4
-]
-base_model_outputs = [base_model.get_layer(name).output for name in layer_names]
-
-# Create the feature extraction model
-down_stack = tf.keras.Model(inputs=base_model.input, outputs=base_model_outputs)
-
-down_stack.trainable = False
-
-from tensorflow_examples.models.pix2pix import pix2pix
-
-up_stack = [
-    pix2pix.upsample(512, 3),  # 4x4 -> 8x8
-    pix2pix.upsample(256, 3),  # 8x8 -> 16x16
-    pix2pix.upsample(128, 3),  # 16x16 -> 32x32
-    pix2pix.upsample(64, 3),   # 32x32 -> 64x64
-]
-
-n_classes = 8
-def bilinear_upsample(image_tensor):
-    upsampled = tf.image.resize(image_tensor, size=(img_height, img_width))
-    return upsampled
-
-def unet_model(output_channels:int):
-    inputs = tf.keras.layers.Input(shape=[img_height, img_width, 3])
-
-    # Downsampling through the model
-    skips = down_stack(inputs)
-    x = skips[-1]
-    skips = reversed(skips[:-1])
-
-    # Upsampling and establishing the skip connections
-    for up, skip in zip(up_stack, skips):
-        x = up(x)
-        concat = tf.keras.layers.Concatenate()
-        x = concat([x, skip])
-
-    # This is the last layer of unet
-    last = tf.keras.layers.Conv2DTranspose(
-      filters=n_classes, kernel_size=3,
-      padding='same')  #64x64 -> 128x128
-
-    x = last(x)
-    
-    #Adding image segmentation layers
-    x = Lambda(bilinear_upsample, name='bilinear_upsample')(x)
-    x = Reshape((img_height*img_width, n_classes))(x)
-    x = Activation('softmax', name='final_softmax')(x)
-
-    return tf.keras.Model(inputs=inputs, outputs=x)
-
-OUTPUT_CLASSES = 8
-
-model = unet_model(output_channels=OUTPUT_CLASSES)
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[dice_coeff, 'accuracy'])
-
-import boto3
-s3 = boto3.resource(service_name='s3',
-                   region_name='eu-west-3',
-                    aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-                    aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
-                   )
-
-bucket = os.environ['S3_BUCKET']
-
-keys=[]
-for obj in s3.Bucket(bucket).objects.all():
-    keys.append(obj.key)
-
-for key in keys:
-    s3.Bucket('pro8').download_file(Key=key, Filename=key)
-
-model.load_weights('model/weights.28.ckpt')
-
+#Generating directories
 target_img = os.path.join(os.getcwd() , 'static/images')
 
 img_dir = "photos_raw/"
 mask_dir = "masks/"
-
-
 test_mask_list = os.listdir(mask_dir)
 test_image_list = os.listdir(img_dir)
 test_image_list.sort()
 test_mask_list.sort()
 
-def create_mask(pred_mask,img):
-        color_map = {
-             '0': [0, 0, 0],
-             '1': [153, 153, 0],
-             '2': [255, 204, 204],
-             '3': [255, 0, 127],
-             '4': [0, 255, 0],
-             '5': [0, 204, 204],
-             '6': [255, 0, 0],
-             '7': [0, 0, 255]
-        }
-
-        dims = (img_height, img_width)
-        z = pred_mask
-        z = np.squeeze(z)
-        z = z.reshape(img_height, img_width, 8)
-        z = cv2.resize(z, (dims[1], dims[0]))
-
-        y = np.argmax(z, axis=2)
-
-        img_color = img.copy()   
-        for i in range(dims[0]):
-            for j in range(dims[1]):
-                img_color[i, j] = color_map[str(y[i, j])]
-        
-        return img_color, y
-
-def convert_to_categ(val):
-    return id2label[val].categoryId
-    
-def convert_categories(mask):
-    vector = np.vectorize(convert_to_categ)
-    mod_mask = vector(mask)
-    return resize(mod_mask, (img_height, img_width))
 
 @app.route('/')
 def index_view():
