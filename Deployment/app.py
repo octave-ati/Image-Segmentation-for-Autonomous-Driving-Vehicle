@@ -1,11 +1,15 @@
 from flask import Flask, render_template, request
-
+from skimage import io
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set(rc={'figure.figsize':(11.7,8.27),"font.size":20,"axes.titlesize":20,"axes.labelsize":18})
 
 #Importing visualization functions
 from visualization import *
 
 #Importing the model
 from model import *
+
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
