@@ -14,9 +14,13 @@ This model identifies different classes of objects in photos captured by a Vehic
 - Vehicle
 - Object
 
-Due to limited computing power at my disposal, the model is not able to differentiate between 
-different types of objects within the same class (example : it does not differentiate a truck
-from a car).
+One of the challenge of this project was to reduce the computing power needed to train and deploy 
+the model so it could be easily used by an edge device like the self-driving vehicle.
+
+We used transfer learning and managed to reach state-of-the art performance on the Cityscrapes
+dataset :
+
+![State of the Art results](img/state_of_the_art.png)
 
 The prediction API is then published on a web interface using Flask.
 
@@ -28,6 +32,15 @@ The prediction API is then published on a web interface using Flask.
 * [Flask Deployment Folder](Deployment/)
 
 ## Screenshots
+
+## Encoder-Decoder Framework
+![Encoder-Decoder](img/encoder-decoder.png)
+
+## Transfer Learning
+![Transfer Learning](img/transfer_learning.png)
+
+## Final Model Architecture
+![Linknet](Linknet.png)
 
 ### Web Interface
 ![Web Interface](img/website.png)
