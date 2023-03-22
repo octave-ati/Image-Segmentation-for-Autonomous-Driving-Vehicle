@@ -20,7 +20,7 @@ the model so it could be easily used by an edge device like the self-driving veh
 We used transfer learning and managed to reach state-of-the art performance on the Cityscrapes
 dataset :
 
-![State of the Art results](img/state_of_the_art.png)
+![State of the Art results](img/state_of_the_art.PNG)
 
 The prediction API is then published on a web interface using Flask.
 
