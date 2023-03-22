@@ -40,7 +40,7 @@ The prediction API is then published on a web interface using Flask.
 ![Transfer Learning](img/transfer_learning.png)
 
 ## Final Model Architecture
-![Linknet](Linknet.png)
+![Linknet](img/Linknet.png)
 
 ### Web Interface
 ![Web Interface](img/website.png)
